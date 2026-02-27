@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faraday-Lenz Law Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 95vw;
+            height: 95vh;
+            max-width: 1200px;
+            max-height: 750px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Introduction Screen */
+        #intro-screen {
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        #intro-screen h1 {
+            font-size: 2.5em;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .rules-box {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 700px;
+            margin-bottom: 20px;
+        }
+
+        .rules-box h2 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .rules-box ul {
+            list-style-position: inside;
+            line-height: 1.5;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Game Screen */
+        #game-screen {
+            display: none;
+            height: 100%;
+            padding: 15px;
+            position: relative;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+        }
+
+        .score-display {
+            font-size: 1.2em;
+            color: white;
+            font-weight: bold;
+        }
+
+        .timer {
+            font-size: 1.2em;
+            color: white;
+            font-weight: bold;
+        }
+
+        .timer.warning {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .end-early-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .game-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            height: calc(100% - 80px);
+        }
+
+        .diagram-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #diagram-canvas {
+            flex: 1;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .question-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .question-box {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 15px;
+            border-radius: 15px;
+            color: #333;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        .question-box h3 {
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-size: 1.1em;
+        }
+
+        .answer-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .answer-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .unit-label {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            pointer-events: none;
+            font-size: 1em;
+        }
+
+        #answer-input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 60px;
+            font-size: 1em;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        #answer-input:focus {
+            border-color: #f5576c;
+            box-shadow: 0 0 0 3px rgba(245,87,108,0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .feedback-box {
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 8px;
+            min-height: 40px;
+            font-size: 0.9em;
+        }
+
+        .feedback-box.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-box.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .feedback-box.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .attempts-display {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .hint-box {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 8px;
+            border-left: 4px solid #1976d2;
+            font-size: 0.85em;
+            color: #333;
+        }
+
+        .hint-box.hidden {
+            display: none;
+        }
+
+        .next-question-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .next-question-btn.hidden {
+            display: none;
+        }
+
+        /* End Screen */
+        #end-screen {
+            display: none;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #end-screen h1 {
+            font-size: 2.5em;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .score-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .final-score {
+            font-size: 4em;
+            color: #667eea;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .score-label {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Introduction Screen -->
+        <div id="intro-screen">
+            <h1>⚡ Faraday-Lenz Law Game ⚡</h1>
+            <div class="rules-box">
+                <h2>How to Play:</h2>
+                <ul>
+                    <li>Answer physics questions about electromagnetic induction</li>
+                    <li>Enter your answer in the textbox (units are shown)</li>
+                    <li>Press Enter or click Submit to check your answer</li>
+                    <li>You get 3 attempts per question</li>
+                    <li>Hints will appear after wrong answers</li>
+                    <li>Watch the animated diagram to understand each scenario</li>
+                    <li>Your score increases with each correct answer!</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="startGame()">Start Game!</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen">
+            <div class="game-header">
+                <div class="score-display">Score: <span id="score">0</span></div>
+                <div class="timer" id="timer">5:00</div>
+                <button class="end-early-btn" onclick="endGame()">End Early</button>
+            </div>
+            <div class="game-content">
+                <div class="diagram-section">
+                    <h3 style="margin-bottom: 8px; color: #764ba2; font-size: 1em;">Visual Diagram:</h3>
+                    <canvas id="diagram-canvas" width="500" height="380"></canvas>
+                </div>
+                <div class="question-section">
+                    <div class="question-box" id="question-box">
+                        <h3>Question:</h3>
+                        <div id="question-text"></div>
+                    </div>
+                    <div class="answer-section">
+                        <div class="input-group">
+                            <div class="answer-input-wrapper">
+                                <span class="unit-label" id="unit-label"></span>
+                                <input type="text" id="answer-input" placeholder="Enter your answer">
+                            </div>
+                            <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">Submit</button>
+                        </div>
+                        <div id="attempts-display" class="attempts-display"></div>
+                        <div id="feedback-box" class="feedback-box"></div>
+                        <div id="hint-box" class="hint-box hidden"></div>
+                        <button id="next-question-btn" class="next-question-btn hidden" onclick="nextQuestion()">Next Question →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen">
+            <h1>🎉 Game Over! 🎉</h1>
+            <div class="score-box">
+                <div class="final-score" id="final-score">0</div>
+                <div class="score-label">Questions Answered Correctly</div>
+            </div>
+            <button class="btn" onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // GAME STATE VARIABLES
+        // ========================================
+        let score = 0;
+        let timeRemaining = 300; // 5 minutes in seconds
+        let timerInterval = null;
+        let currentQuestion = null;
+        let attemptsRemaining = 3;
+        let animationId = null;
+        let animationTime = 0;
+
+        // ========================================
+        // PHYSICS CONSTANTS
+        // ========================================
+        const SQRT2 = Math.sqrt(2);
+
+        // ========================================
+        // QUESTION TYPES
+        // ========================================
+        const questionTypes = [
+            {
+                type: 'wire_moving',
+                name: 'Wire Moving Through Magnetic Field',
+                variables: ['emf', 'B', 'L', 'v', 'angle'],
+                units: { emf: 'V', B: 'T', L: 'm', v: 'm/s', angle: '°' }
+            },
+            {
+                type: 'rotating_coil_max',
+                name: 'Rotating Coil - Maximum EMF',
+                variables: ['emf_max', 'N', 'B', 'A', 'omega'],
+                units: { emf_max: 'V', N: '', B: 'T', A: 'm²', omega: 'rad/s' }
+            },
+            {
+                type: 'rotating_coil_rms',
+                name: 'Rotating Coil - RMS EMF',
+                variables: ['emf_rms', 'N', 'B', 'A', 'omega'],
+                units: { emf_rms: 'V', N: '', B: 'T', A: 'm²', omega: 'rad/s' }
+            },
+            {
+                type: 'rotating_magnet',
+                name: 'Rotating Magnet Near Coil',
+                variables: ['emf_max', 'N', 'B', 'A', 'omega'],
+                units: { emf_max: 'V', N: '', B: 'T', A: 'm²', omega: 'rad/s' }
+            }
+        ];
+
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        
+        // Round number to n significant figures
+        function roundToSigFigs(num, sigFigs) {
+            if (num === 0) return 0;
+            const magnitude = Math.floor(Math.log10(Math.abs(num)));
+            const scale = Math.pow(10, sigFigs - magnitude - 1);
+            return Math.round(num * scale) / scale;
+        }
+
+        // Check if answer is correct within 2 significant figures
+        function checkAnswer(userAnswer, correctAnswer) {
+            const user2sf = roundToSigFigs(userAnswer, 2);
+            const correct2sf = roundToSigFigs(correctAnswer, 2);
+            
+            if (user2sf === correct2sf) {
+                return { correct: true, warning: false };
+            }
+            
+            // Check if second significant figure is one digit away
+            const userStr = user2sf.toExponential(1);
+            const correctStr = correct2sf.toExponential(1);
+            
+            // Extract mantissa and exponent
+            const userMatch = userStr.match(/(-?\d+\.?\d*)e([+-]?\d+)/);
+            const correctMatch = correctStr.match(/(-?\d+\.?\d*)e([+-]?\d+)/);
+            
+            if (userMatch && correctMatch && userMatch[2] === correctMatch[2]) {
+                const userMantissa = parseFloat(userMatch[1]);
+                const correctMantissa = parseFloat(correctMatch[1]);
+                const diff = Math.abs(userMantissa - correctMantissa);
+                
+                if (diff <= 0.2) { // One digit away in 2sf
+                    return { correct: true, warning: true };
+                }
+            }
+            
+            return { correct: false, warning: false };
+        }
+
+        // ========================================
+        // QUESTION GENERATION
+        // ========================================
+        
+        function generateQuestion() {
+            const typeIndex = Math.floor(Math.random() * questionTypes.length);
+            const questionType = questionTypes[typeIndex];
+            
+            let question = {
+                type: questionType.type,
+                name: questionType.name,
+                variables: {},
+                unknownVar: null,
+                correctAnswer: 0,
+                unit: ''
+            };
+            
+            // Choose which variable is unknown
+            const unknownIndex = Math.floor(Math.random() * questionType.variables.length);
+            question.unknownVar = questionType.variables[unknownIndex];
+            question.unit = questionType.units[question.unknownVar];
+            
+            // Generate random values for known variables and calculate unknown
+            switch (questionType.type) {
+                case 'wire_moving':
+                    question = generateWireMovingQuestion(question);
+                    break;
+                case 'rotating_coil_max':
+                    question = generateRotatingCoilMaxQuestion(question);
+                    break;
+                case 'rotating_coil_rms':
+                    question = generateRotatingCoilRmsQuestion(question);
+                    break;
+                case 'rotating_magnet':
+                    question = generateRotatingMagnetQuestion(question);
+                    break;
+            }
+            
+            return question;
+        }
+
+        function generateWireMovingQuestion(question) {
+            // CORRECTED PHYSICS:
+            // For a wire moving through a magnetic field:
+            // - B is into the page (-z direction)
+            // - Wire is vertical (y direction)
+            // - Wire moves in x-y plane at angle from horizontal
+            // - EMF = B * L * v_perpendicular
+            // where v_perpendicular is the component of velocity perpendicular to the wire
+            // 
+            // If angle is measured from horizontal:
+            // - v_x = v * cos(angle)
+            // - v_y = v * sin(angle)
+            // Since wire is vertical (y direction), only v_x contributes to EMF
+            // So: ε = B * L * v * cos(angle)
+            // 
+            // When angle = 90° (velocity is vertical), EMF = 0 ✓
+            // When angle = 0° (velocity is horizontal), EMF = BLv ✓
+            
+            const B = (Math.random() * 0.5 + 0.1).toFixed(2) * 1; // 0.1 to 0.6 T
+            const L = (Math.random() * 0.8 + 0.2).toFixed(2) * 1; // 0.2 to 1.0 m
+            const v = (Math.random() * 8 + 2).toFixed(1) * 1; // 2 to 10 m/s
+            const angle = Math.floor(Math.random() * 6) * 15; // 0, 15, 30, 45, 60, 75 degrees (exclude 90!)
+            const emf = B * L * v * Math.cos(angle * Math.PI / 180);
+            
+            const values = { emf, B, L, v, angle };
+            
+            // Set all values except unknown
+            for (let key in values) {
+                if (key !== question.unknownVar) {
+                    question.variables[key] = values[key];
+                }
+            }
+            
+            // Calculate correct answer based on unknown variable
+            switch (question.unknownVar) {
+                case 'emf':
+                    question.correctAnswer = emf;
+                    break;
+                case 'B':
+                    question.correctAnswer = emf / (L * v * Math.cos(angle * Math.PI / 180));
+                    break;
+                case 'L':
+                    question.correctAnswer = emf / (B * v * Math.cos(angle * Math.PI / 180));
+                    break;
+                case 'v':
+                    question.correctAnswer = emf / (B * L * Math.cos(angle * Math.PI / 180));
+                    break;
+                case 'angle':
+                    const cosTheta = emf / (B * L * v);
+                    question.correctAnswer = Math.acos(cosTheta) * 180 / Math.PI;
+                    break;
+            }
+            
+            return question;
+        }
+
+        function generateRotatingCoilMaxQuestion(question) {
+            // ε_max = NBAω
+            const N = Math.floor(Math.random() * 90 + 10); // 10 to 100 turns
+            const B = (Math.random() * 0.4 + 0.1).toFixed(2) * 1; // 0.1 to 0.5 T
+            const A = (Math.random() * 0.015 + 0.005).toFixed(4) * 1; // 0.005 to 0.02 m²
+            const omega = (Math.random() * 150 + 50).toFixed(1) * 1; // 50 to 200 rad/s
+            const emf_max = N * B * A * omega;
+            
+            const values = { emf_max, N, B, A, omega };
+            
+            for (let key in values) {
+                if (key !== question.unknownVar) {
+                    question.variables[key] = values[key];
+                }
+            }
+            
+            switch (question.unknownVar) {
+                case 'emf_max':
+                    question.correctAnswer = emf_max;
+                    break;
+                case 'N':
+                    question.correctAnswer = emf_max / (B * A * omega);
+                    break;
+                case 'B':
+                    question.correctAnswer = emf_max / (N * A * omega);
+                    break;
+                case 'A':
+                    question.correctAnswer = emf_max / (N * B * omega);
+                    break;
+                case 'omega':
+                    question.correctAnswer = emf_max / (N * B * A);
+                    break;
+            }
+            
+            return question;
+        }
+
+        function generateRotatingCoilRmsQuestion(question) {
+            // ε_rms = NBAω / √2
+            const N = Math.floor(Math.random() * 90 + 10);
+            const B = (Math.random() * 0.4 + 0.1).toFixed(2) * 1;
+            const A = (Math.random() * 0.015 + 0.005).toFixed(4) * 1;
+            const omega = (Math.random() * 150 + 50).toFixed(1) * 1;
+            const emf_rms = (N * B * A * omega) / SQRT2;
+            
+            const values = { emf_rms, N, B, A, omega };
+            
+            for (let key in values) {
+                if (key !== question.unknownVar) {
+                    question.variables[key] = values[key];
+                }
+            }
+            
+            switch (question.unknownVar) {
+                case 'emf_rms':
+                    question.correctAnswer = emf_rms;
+                    break;
+                case 'N':
+                    question.correctAnswer = (emf_rms * SQRT2) / (B * A * omega);
+                    break;
+                case 'B':
+                    question.correctAnswer = (emf_rms * SQRT2) / (N * A * omega);
+                    break;
+                case 'A':
+                    question.correctAnswer = (emf_rms * SQRT2) / (N * B * omega);
+                    break;
+                case 'omega':
+                    question.correctAnswer = (emf_rms * SQRT2) / (N * B * A);
+                    break;
+            }
+            
+            return question;
+        }
+
+        function generateRotatingMagnetQuestion(question) {
+            // Same as rotating coil max: ε_max = NBAω
+            const N = Math.floor(Math.random() * 90 + 10);
+            const B = (Math.random() * 0.4 + 0.1).toFixed(2) * 1;
+            const A = (Math.random() * 0.015 + 0.005).toFixed(4) * 1;
+            const omega = (Math.random() * 150 + 50).toFixed(1) * 1;
+            const emf_max = N * B * A * omega;
+            
+            const values = { emf_max, N, B, A, omega };
+            
+            for (let key in values) {
+                if (key !== question.unknownVar) {
+                    question.variables[key] = values[key];
+                }
+            }
+            
+            switch (question.unknownVar) {
+                case 'emf_max':
+                    question.correctAnswer = emf_max;
+                    break;
+                case 'N':
+                    question.correctAnswer = emf_max / (B * A * omega);
+                    break;
+                case 'B':
+                    question.correctAnswer = emf_max / (N * A * omega);
+                    break;
+                case 'A':
+                    question.correctAnswer = emf_max / (N * B * omega);
+                    break;
+                case 'omega':
+                    question.correctAnswer = emf_max / (N * B * A);
+                    break;
+            }
+            
+            return question;
+        }
+
+        // ========================================
+        // DISPLAY FUNCTIONS
+        // ========================================
+        
+        function displayQuestion() {
+            const questionText = document.getElementById('question-text');
+            const unitLabel = document.getElementById('unit-label');
+            
+            let text = `<strong>${currentQuestion.name}</strong><br><br>`;
+            text += 'Given:<br>';
+            
+            const varNames = {
+                emf: 'Induced EMF (ε)',
+                emf_max: 'Maximum EMF (ε<sub>max</sub>)',
+                emf_rms: 'RMS EMF (ε<sub>rms</sub>)',
+                B: currentQuestion.type === 'rotating_magnet' ? 'Maximum magnetic flux density (B<sub>max</sub>)' : 'Magnetic flux density (B)',
+                L: 'Length of wire (L)',
+                v: 'Velocity of wire (v)',
+                angle: 'Angle of velocity from horizontal (θ)',
+                N: 'Number of turns (N)',
+                A: 'Area of coil (A)',
+                omega: 'Angular frequency (ω)'
+            };
+            
+            for (let key in currentQuestion.variables) {
+                const unit = questionTypes.find(q => q.type === currentQuestion.type).units[key];
+                let displayValue = currentQuestion.variables[key];
+                
+                // Format to sensible significant figures
+                if (typeof displayValue === 'number') {
+                    // For whole numbers (like N), don't add decimal places
+                    if (key === 'N') {
+                        displayValue = Math.round(displayValue);
+                    } else if (key === 'angle') {
+                        displayValue = displayValue.toFixed(0);
+                    } else {
+                        // For other values, use 3-4 significant figures
+                        displayValue = displayValue.toPrecision(3);
+                    }
+                }
+                
+                text += `• ${varNames[key]} = ${displayValue}${unit ? ' ' + unit : ''}<br>`;
+            }
+            
+            text += `<br><strong>Find: ${varNames[currentQuestion.unknownVar]}</strong>`;
+            
+            questionText.innerHTML = text;
+            unitLabel.textContent = currentQuestion.unit;
+            
+            // Reset answer section
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').disabled = false;
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('feedback-box').innerHTML = '';
+            document.getElementById('feedback-box').className = 'feedback-box';
+            document.getElementById('hint-box').classList.add('hidden');
+            document.getElementById('next-question-btn').classList.add('hidden');
+            document.getElementById('attempts-display').textContent = '';
+            
+            attemptsRemaining = 3;
+            
+            // Focus the answer input
+            document.getElementById('answer-input').focus();
+            
+            // Start animation
+            startAnimation();
+        }
+
+        function displayFeedback(message, type) {
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.innerHTML = message;
+            feedbackBox.className = `feedback-box ${type}`;
+        }
+
+        function displayHint() {
+            const hintBox = document.getElementById('hint-box');
+            const attemptsUsed = 3 - attemptsRemaining;
+            
+            let hint = '';
+            
+            switch (currentQuestion.type) {
+                case 'wire_moving':
+                    if (attemptsUsed === 1) {
+                        hint = '<strong>Hint:</strong> The wire is vertical and moves at an angle from horizontal. Only the horizontal component of velocity contributes to EMF. Use ε = BLv cos(θ) where θ is the angle from horizontal.';
+                    } else if (attemptsUsed === 2) {
+                        hint = '<strong>Hint:</strong> When the wire moves parallel to its length (θ=90°), EMF = 0. When it moves perpendicular (θ=0°), EMF = BLv. Check your calculator is in the right mode (degrees/radians).';
+                    }
+                    break;
+                case 'rotating_coil_max':
+                    if (attemptsUsed === 1) {
+                        hint = '<strong>Hint:</strong> For a rotating coil, the maximum EMF is ε<sub>max</sub> = NBAω';
+                    } else if (attemptsUsed === 2) {
+                        hint = '<strong>Hint:</strong> Rearrange ε<sub>max</sub> = NBAω to isolate your unknown variable.';
+                    }
+                    break;
+                case 'rotating_coil_rms':
+                    if (attemptsUsed === 1) {
+                        hint = '<strong>Hint:</strong> RMS EMF = (Maximum EMF) / √2. First find max EMF using ε<sub>max</sub> = NBAω';
+                    } else if (attemptsUsed === 2) {
+                        hint = '<strong>Hint:</strong> ε<sub>rms</sub> = NBAω / √2. Rearrange to solve for the unknown.';
+                    }
+                    break;
+                case 'rotating_magnet':
+                    if (attemptsUsed === 1) {
+                        hint = '<strong>Hint:</strong> A rotating magnet induces the same maximum EMF as a rotating coil: ε<sub>max</sub> = NBAω';
+                    } else if (attemptsUsed === 2) {
+                        hint = '<strong>Hint:</strong> Rearrange ε<sub>max</sub> = NBAω to find your unknown variable.';
+                    }
+                    break;
+            }
+            
+            if (hint) {
+                hintBox.innerHTML = hint;
+                hintBox.classList.remove('hidden');
+            }
+        }
+
+        // ========================================
+        // ANIMATION FUNCTIONS
+        // ========================================
+        
+        function startAnimation() {
+            animationTime = 0;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            animate();
+        }
+
+        function animate() {
+            const canvas = document.getElementById('diagram-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw based on question type
+            switch (currentQuestion.type) {
+                case 'wire_moving':
+                    drawWireMoving(ctx, animationTime);
+                    break;
+                case 'rotating_coil_max':
+                case 'rotating_coil_rms':
+                    drawRotatingCoil(ctx, animationTime);
+                    break;
+                case 'rotating_magnet':
+                    drawRotatingMagnet(ctx, animationTime);
+                    break;
+            }
+            
+            animationTime += 0.02;
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function drawWireMoving(ctx, time) {
+            // Draw magnetic field (into page - shown as crosses)
+            const fieldSpacing = 35;
+            const fieldSize = 12;
+            
+            ctx.fillStyle = '#e3f2fd';
+            ctx.fillRect(0, 0, 500, 380);
+            
+            // Draw field symbols (crosses for into page)
+            ctx.strokeStyle = '#1976d2';
+            ctx.lineWidth = 2;
+            for (let x = 40; x < 460; x += fieldSpacing) {
+                for (let y = 40; y < 340; y += fieldSpacing) {
+                    // Draw X for into page
+                    ctx.beginPath();
+                    ctx.moveTo(x - fieldSize/2, y - fieldSize/2);
+                    ctx.lineTo(x + fieldSize/2, y + fieldSize/2);
+                    ctx.moveTo(x + fieldSize/2, y - fieldSize/2);
+                    ctx.lineTo(x - fieldSize/2, y + fieldSize/2);
+                    ctx.stroke();
+                }
+            }
+            
+            // Get angle from question or default (angle from horizontal)
+            const angleDeg = currentQuestion.variables.angle !== undefined ? 
+                           currentQuestion.variables.angle : 60;
+            const angleRad = angleDeg * Math.PI / 180;
+            
+            // Wire is VERTICAL, moves at angle from horizontal
+            const wireY = 190;
+            const speed = 40; // pixels per second
+            
+            // Wire moves in direction of angle from horizontal
+            const wireX = 80 + ((time * speed * Math.cos(angleRad)) % 340);
+            const wireYPos = wireY - (time * speed * Math.sin(angleRad)) % 100;
+            
+            // Keep wire in bounds
+            const actualWireX = 80 + ((wireX - 80 + 340) % 340);
+            const actualWireY = 190 + ((wireYPos - 190 + 50) % 100) - 50;
+            
+            ctx.strokeStyle = '#d32f2f';
+            ctx.fillStyle = '#d32f2f';
+            ctx.lineWidth = 4;
+            
+            // Wire (vertical)
+            ctx.beginPath();
+            ctx.moveTo(actualWireX, actualWireY - 80);
+            ctx.lineTo(actualWireX, actualWireY + 80);
+            ctx.stroke();
+            
+            // Horizontal dotted reference line for angle measurement
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(actualWireX - 50, actualWireY);
+            ctx.lineTo(actualWireX + 100, actualWireY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Velocity arrow - pointing in direction specified by angle from horizontal
+            const arrowLength = 70;
+            const vx = Math.cos(angleRad) * arrowLength;
+            const vy = -Math.sin(angleRad) * arrowLength; // Negative because canvas y increases downward
+            
+            ctx.strokeStyle = '#2e7d32';
+            ctx.fillStyle = '#2e7d32';
+            ctx.lineWidth = 3;
+            drawArrow(ctx, actualWireX, actualWireY, actualWireX + vx, actualWireY + vy);
+            
+            // Show the angle with an arc from the horizontal reference line
+            ctx.strokeStyle = '#ff6f00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(actualWireX, actualWireY, 30, 0, -angleRad, true);
+            ctx.stroke();
+            
+            // Labels with background
+            drawLabel(ctx, actualWireX - 25, actualWireY - 100, 'Wire (L)', '#d32f2f');
+            drawLabel(ctx, actualWireX + vx/2 + 15, actualWireY + vy/2 - 10, 'v', '#2e7d32');
+            drawLabel(ctx, 50, 25, 'B (into page)', '#1976d2');
+            drawLabel(ctx, actualWireX + 45, actualWireY + 15, `θ=${angleDeg}°`, '#ff6f00');
+        }
+
+        function drawRotatingCoil(ctx, time) {
+            ctx.fillStyle = '#fff3e0';
+            ctx.fillRect(0, 0, 500, 380);
+            
+            const centerX = 250;
+            const centerY = 190;
+            const coilWidth = 100;
+            const coilHeight = 140;
+            
+            // Draw magnetic field lines (horizontal, going right)
+            ctx.strokeStyle = '#1976d2';
+            ctx.lineWidth = 2;
+            for (let y = 80; y < 300; y += 35) {
+                drawArrow(ctx, 40, y, 460, y);
+            }
+            drawLabel(ctx, 430, 60, 'B', '#1976d2');
+            
+            // Rotating coil - rotates around horizontal axis (parallel to B)
+            const rotation = time * 2; // rotation angle
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            // Calculate perspective width based on rotation
+            const perspectiveWidth = Math.abs(Math.cos(rotation)) * coilWidth;
+            
+            // Coil rectangle (viewed from the side, rotating)
+            ctx.strokeStyle = '#d32f2f';
+            ctx.fillStyle = 'rgba(211, 47, 47, 0.3)';
+            ctx.lineWidth = 4;
+            
+            // Draw as an ellipse to show 3D rotation
+            ctx.fillRect(-perspectiveWidth/2, -coilHeight/2, perspectiveWidth, coilHeight);
+            ctx.strokeRect(-perspectiveWidth/2, -coilHeight/2, perspectiveWidth, coilHeight);
+            
+            // Area vector - rotates in the horizontal plane (perpendicular to coil's rotation)
+            const areaX = Math.sin(rotation) * 80;
+            
+            ctx.strokeStyle = '#2e7d32';
+            ctx.fillStyle = '#2e7d32';
+            ctx.lineWidth = 3;
+            
+            // Draw the horizontal arrow component
+            if (Math.abs(areaX) > 5) {
+                drawArrow(ctx, 0, 0, areaX, 0);
+            }
+            
+            // Rotation axis (horizontal, parallel to B)
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(-coilWidth/2 - 40, 0);
+            ctx.lineTo(coilWidth/2 + 40, 0);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.restore();
+            
+            // Labels
+            drawLabel(ctx, centerX - 60, centerY - 100, 'Rotating Coil', '#d32f2f');
+            drawLabel(ctx, centerX, centerY + 95, 'Area vector (A)', '#2e7d32');
+            drawLabel(ctx, centerX - 80, 330, `ω = ${currentQuestion.variables.omega ? currentQuestion.variables.omega.toFixed(1) : '?'} rad/s`, '#ff6f00');
+            
+            if (currentQuestion.type === 'rotating_coil_rms') {
+                drawLabel(ctx, centerX + 80, 330, 'Finding RMS EMF', '#7b1fa2');
+            } else {
+                drawLabel(ctx, centerX + 80, 330, 'Finding Max EMF', '#7b1fa2');
+            }
+        }
+
+        function drawRotatingMagnet(ctx, time) {
+            ctx.fillStyle = '#f3e5f5';
+            ctx.fillRect(0, 0, 500, 380);
+            
+            const centerX = 250;
+            const centerY = 190;
+            const magnetWidth = 80;
+            const magnetHeight = 30;
+            
+            // Stationary coil on the left - shown as vertical lines (side view of wire loops)
+            ctx.strokeStyle = '#d32f2f';
+            ctx.lineWidth = 4;
+            
+            const coilCenterX = centerX - 100;
+            const coilWidth = 40;
+            const coilHeight = 100;
+            const numWires = 8;
+            
+            // Draw vertical lines representing wire loops seen from the side
+            for (let i = 0; i < numWires; i++) {
+                const x = coilCenterX - coilWidth/2 + (i * coilWidth / (numWires - 1));
+                ctx.beginPath();
+                ctx.moveTo(x, centerY - coilHeight/2);
+                ctx.lineTo(x, centerY + coilHeight/2);
+                ctx.stroke();
+            }
+            
+            // Rotating magnet - close to the coil
+            const rotation = time * 2;
+            ctx.save();
+            ctx.translate(centerX + 20, centerY);
+            ctx.rotate(rotation);
+            
+            // Draw simple dipole field lines FIRST (behind magnet)
+            // Just one arc on each side
+            ctx.strokeStyle = '#1976d2';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            // Upper field line
+            ctx.beginPath();
+            ctx.moveTo(-magnetWidth/2, 0);
+            ctx.bezierCurveTo(-80, 50, 80, 50, magnetWidth/2, 0);
+            ctx.stroke();
+            
+            // Lower field line
+            ctx.beginPath();
+            ctx.moveTo(-magnetWidth/2, 0);
+            ctx.bezierCurveTo(-80, -50, 80, -50, magnetWidth/2, 0);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // Draw the magnet itself on top
+            // North pole (red)
+            ctx.fillStyle = '#ef5350';
+            ctx.fillRect(-magnetWidth/2, -magnetHeight/2, magnetWidth/2, magnetHeight);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-magnetWidth/2, -magnetHeight/2, magnetWidth/2, magnetHeight);
+            
+            // South pole (blue)
+            ctx.fillStyle = '#42a5f5';
+            ctx.fillRect(0, -magnetHeight/2, magnetWidth/2, magnetHeight);
+            ctx.strokeRect(0, -magnetHeight/2, magnetWidth/2, magnetHeight);
+            
+            // Labels on magnet
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('N', -magnetWidth/4, 0);
+            ctx.fillText('S', magnetWidth/4, 0);
+            
+            ctx.restore();
+            
+            // Labels
+            drawLabel(ctx, coilCenterX, centerY - 80, 'Coil (side view)', '#d32f2f');
+            drawLabel(ctx, centerX + 20, centerY - 70, 'Rotating Magnet', '#7b1fa2');
+            drawLabel(ctx, centerX - 80, 330, `ω = ${currentQuestion.variables.omega ? currentQuestion.variables.omega.toFixed(1) : '?'} rad/s`, '#ff6f00');
+            drawLabel(ctx, centerX + 100, 330, 'B changes with rotation', '#1976d2');
+        }
+
+        function drawArrow(ctx, fromX, fromY, toX, toY) {
+            const headLength = 15;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6),
+                       toY - headLength * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6),
+                       toY - headLength * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawLabel(ctx, x, y, text, color) {
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            
+            // Measure text
+            const metrics = ctx.measureText(text);
+            const width = metrics.width + 12;
+            const height = 20;
+            
+            // Draw background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillRect(x - width/2, y - height/2, width, height);
+            
+            // Draw border
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x - width/2, y - height/2, width, height);
+            
+            // Draw text
+            ctx.fillStyle = color;
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y);
+        }
+
+        // ========================================
+        // GAME FLOW FUNCTIONS
+        // ========================================
+        
+        function startGame() {
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            score = 0;
+            timeRemaining = 300;
+            document.getElementById('score').textContent = score;
+            
+            startTimer();
+            nextQuestion();
+            
+            // Focus the answer input
+            setTimeout(() => {
+                document.getElementById('answer-input').focus();
+            }, 100);
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 60) {
+                    document.getElementById('timer').classList.add('warning');
+                }
+                
+                if (timeRemaining <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function nextQuestion() {
+            currentQuestion = generateQuestion();
+            displayQuestion();
+        }
+
+        function submitAnswer() {
+            const userInput = document.getElementById('answer-input').value.trim();
+            
+            if (userInput === '') {
+                displayFeedback('Please enter an answer!', 'incorrect');
+                return;
+            }
+            
+            const userAnswer = parseFloat(userInput);
+            
+            if (isNaN(userAnswer)) {
+                displayFeedback('Please enter a valid number!', 'incorrect');
+                return;
+            }
+            
+            attemptsRemaining--;
+            
+            const result = checkAnswer(userAnswer, currentQuestion.correctAnswer);
+            
+            if (result.correct) {
+                score++;
+                document.getElementById('score').textContent = score;
+                
+                let message = '✓ Correct! ';
+                if (result.warning) {
+                    message += `The answer is ${currentQuestion.correctAnswer.toPrecision(3)} ${currentQuestion.unit}. Your answer may have a small rounding error, but it's close enough!`;
+                    displayFeedback(message, 'warning');
+                } else {
+                    message += `The answer is ${currentQuestion.correctAnswer.toPrecision(3)} ${currentQuestion.unit}.`;
+                    displayFeedback(message, 'correct');
+                }
+                
+                document.getElementById('answer-input').disabled = true;
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('next-question-btn').classList.remove('hidden');
+                document.getElementById('next-question-btn').focus();
+            } else {
+                if (attemptsRemaining > 0) {
+                    displayFeedback(`✗ Incorrect. Try again!`, 'incorrect');
+                    document.getElementById('attempts-display').textContent = 
+                        `Attempts remaining: ${attemptsRemaining}`;
+                    displayHint();
+                } else {
+                    displayFeedback(
+                        `✗ Incorrect. The correct answer is ${currentQuestion.correctAnswer.toPrecision(3)} ${currentQuestion.unit}.`, 
+                        'incorrect'
+                    );
+                    document.getElementById('answer-input').disabled = true;
+                    document.getElementById('submit-btn').disabled = true;
+                    document.getElementById('next-question-btn').classList.remove('hidden');
+                    document.getElementById('next-question-btn').focus();
+                }
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            document.getElementById('final-score').textContent = score;
+        }
+
+        // ========================================
+        // EVENT LISTENERS
+        // ========================================
+        
+        document.getElementById('answer-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!document.getElementById('next-question-btn').classList.contains('hidden')) {
+                    nextQuestion();
+                } else {
+                    submitAnswer();
+                }
+            }
+        });
+
+        // Focus on input when game starts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up the intro screen as visible
+            document.getElementById('intro-screen').style.display = 'flex';
+        });
+    </script>
+</body>
+</html>
